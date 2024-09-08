@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Products.Api.Endpoints;
 using Products.Infrastructure;
+using Products.Infrastructure.DataSeeding;
 using Products.Infrastructure.Interfaces;
 using Products.Infrastructure.Repositories;
 using Products.Service;
@@ -12,7 +13,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<ProductsDbContext>();
+builder.Services.AddDbContext<ProductsDbContext>(options =>
+{
+    var configuration = builder.Configuration;
+    var connectionString = 
+        Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING") ?? 
+        configuration.GetConnectionString("DefaultConnection")!.Replace("{PASSWORD}", Environment.GetEnvironmentVariable("DB_PASSWORD"));
+
+    options.UseNpgsql(connectionString);
+});
 
 builder.Services.AddScoped<IProductService, ProductService>();
 
@@ -26,11 +35,8 @@ using (var scope = app.Services.CreateScope())
     if(dbContext != null)
     {
         if(dbContext.Database.EnsureCreated()){
-            
-        }
-        else if(dbContext.Database.GetPendingMigrations().Any())
-        {
-            dbContext.Database.Migrate();
+            var seeder = new ProductSeeder(dbContext);
+            await seeder.SeedAsync();
         }
     }
 }
@@ -44,7 +50,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapWeatherforecastEndpoints();
+app.MapGroup("api/products")
+    .MapProductsApi()
+    .WithTags("Products Endpoints");
 app.MapHealthChecks("/healthz");
 
 app.Run();

@@ -1,7 +1,9 @@
-using Products.Domain.Entities;
+#nullable enable
+using Products.Infrastructure.ExceptionHandling;
 using Products.Infrastructure.Interfaces;
 using Products.Service.DTOs;
 using Products.Service.Interfaces;
+using Products.Service.Mappings;
 
 namespace Products.Service
 {
@@ -9,34 +11,48 @@ namespace Products.Service
     {
         private readonly IProductRepository _productRepository = productRepository;
 
-        public void Delete(int id)
+        public async Task Delete(long id)
         {
-            throw new NotImplementedException();
+            await _productRepository.Delete(id);
         }
 
-        public ProductReadDto GetById(int id)
+        public async Task<ProductReadDto?> GetById(long id)
         {
-            throw new NotImplementedException();
+            var product = await _productRepository.GetById(id);
+
+            return product?.ToDTO();
         }
 
-        public ProductReadDto GetByName(string name)
+        public async Task<ProductListDto> ListRecords(string? name, string? sortBy)
         {
-            throw new NotImplementedException();
+            var products = await _productRepository.ListRecords(name, sortBy);
+
+            return products.ToListDTO();
         }
 
-        public List<ProductReadDto> ListRecords()
+        public async Task Register(ProductDto dto)
         {
-            throw new NotImplementedException();
+            ValidatePayload(dto);
+            await _productRepository.Register(dto.ToEntity());
         }
 
-        public void Register(ProductCreateDto productCreateDto)
+        public async Task Update(ProductUpdateDto dto)
         {
-            throw new NotImplementedException();
+            ValidatePayload(dto);
+            await _productRepository.Update(dto.ToEntityUpdate());
         }
 
-        public void Update(ProductUpdateDto productUpdateDto)
+        private static void ValidatePayload(ProductDto product)
         {
-            throw new NotImplementedException();
+            if(string.IsNullOrEmpty(product.Name)) 
+            {
+                throw new ValidationException("Name cannot be null!");
+            }
+
+            if(product.Value < 0) 
+            {
+                throw new ValidationException("The product value cannot be less than zero!");
+            }
         }
     }
 }

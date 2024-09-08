@@ -8,9 +8,23 @@ namespace Products.Infrastructure.Repositories
     {     
         private readonly ProductsDbContext _dbContext = dbContext;
 
-        public Product GetByName(int id)
+        public async Task<List<Product>> ListRecords(string? name, string? sortBy)
         {
-            throw new NotImplementedException();
+            var query = _dbContext.Product.AsQueryable();
+
+            if (!string.IsNullOrEmpty(name))
+            {
+                query = query.Where(p => p.Name.Contains(name));
+            }
+
+            query = sortBy?.ToLower() switch
+            {
+                "value" => query.OrderBy(p => p.Value),
+                "date" => query.OrderBy(p => p.CreatedDate),
+                _ => query.OrderBy(p => p.Name)
+            };
+
+            return await query.ToListAsync();
         }
     }
 }

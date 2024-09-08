@@ -5,6 +5,6 @@ namespace Products.Infrastructure.Interfaces
 {
     public interface IProductRepository : IRepository<Product>
     {
-        Product GetByName(int id);
+        Task<List<Product>> ListRecords(string? name, string? sortBy);
     }
 }

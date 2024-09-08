@@ -1,20 +1,18 @@
-using Products.Infrastructure.Interfaces;
+#nullable enable
 using Products.Service.DTOs;
 
 namespace Products.Service.Interfaces
 {
     public interface IProductService
     {
-        void Delete(int id);
+        Task Delete(long id);
 
-        ProductReadDto GetById(int id);
+        Task<ProductReadDto?> GetById(long id);
 
-        ProductReadDto GetByName(string name);
+        Task<ProductListDto> ListRecords(string? name, string? sortBy);
 
-        List<ProductReadDto> ListRecords();
+        Task Register(ProductDto dto);
 
-        void Register(ProductCreateDto dto);
-
-        void Update(ProductUpdateDto dto);
+        Task Update(ProductUpdateDto dto);
     }
 }

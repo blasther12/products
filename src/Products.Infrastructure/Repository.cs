@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Products.Domain.Entities.Base;
+using Products.Infrastructure.ExceptionHandling;
 using Products.Infrastructure.Interfaces.Base;
 
 namespace Products.Infrastructure
 {
-    public abstract class Repository<TEntity> : IRepository<TEntity> where TEntity : EntityBase, new()
+    public class Repository<TEntity> : IRepository<TEntity> where TEntity : EntityBase
     {
         protected DbContext Db;
         protected DbSet<TEntity> DbSetContext;
@@ -14,29 +15,35 @@ namespace Products.Infrastructure
             Db = dbContext;
             DbSetContext = Db.Set<TEntity>();
         }
-        public void Delete(int id)
+
+        public async Task Delete(long id)
         {
-            throw new NotImplementedException();
+            var entity = await GetById(id) ?? throw new NotFoundException("No data found for deletion!");
+            Db.Remove(entity);
+            await Db.SaveChangesAsync();
         }
 
-        public TEntity GetById(int id)
+        public async Task<TEntity?> GetById(long id)
         {
-            throw new NotImplementedException();
+            return await DbSetContext.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public List<TEntity> ListRecords()
+        public async Task Register(TEntity entity)
         {
-            throw new NotImplementedException();
+            await DbSetContext.AddAsync(entity);
+            await Db.SaveChangesAsync();
         }
 
-        public void Register(TEntity entity)
+        public async Task Update(TEntity entity)
         {
-            throw new NotImplementedException();
+            DbSetContext.Attach(entity);
+            Db.Entry(entity).State = EntityState.Modified;
+            await Db.SaveChangesAsync();
         }
 
-        public void Update(TEntity entity)
+        async Task<List<TEntity>> IRepository<TEntity>.ListRecords()
         {
-            throw new NotImplementedException();
+            return await DbSetContext.ToListAsync();
         }
     }
 }
