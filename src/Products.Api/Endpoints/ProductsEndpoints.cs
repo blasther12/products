@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 using Products.Infrastructure.ExceptionHandling;
 using Products.Service.DTOs;
 using Products.Service.Interfaces;
@@ -58,8 +59,7 @@ namespace Products.Api.Endpoints
             return TypedResults.Ok(product);
         }
 
-        // create todo
-        public static async Task<Results<Created, BadRequest<string>, StatusCodeHttpResult>> RegisterProduct(IProductService productService, ProductCreateDto product)
+        public static async Task<IResult> RegisterProduct(IProductService productService, ProductCreateDto product)
         {
             try
             {
@@ -68,14 +68,11 @@ namespace Products.Api.Endpoints
             }
             catch (Exception ex)
             {
-                return ex is ValidationException ?
-                    TypedResults.BadRequest(ex.Message) :
-                    TypedResults.StatusCode(500);
+                return HandleException(ex, product.Name);
             }
         }
 
-        // update todo
-        public static async Task<Results<NoContent, BadRequest<string>, StatusCodeHttpResult>> UpdateProduct(IProductService productService, ProductUpdateDto product)
+        public static async Task<IResult> UpdateProduct(IProductService productService, ProductUpdateDto product)
         {
             try
             {
@@ -84,14 +81,11 @@ namespace Products.Api.Endpoints
             }
             catch (Exception ex)
             {
-                return ex is ValidationException ?
-                    TypedResults.BadRequest(ex.Message) :
-                    TypedResults.StatusCode(500);
+                return HandleException(ex);
             }
         }
 
-        // delete todo
-        public static async Task<Results<NoContent, NotFound<string>, StatusCodeHttpResult>> DeleteProduct(IProductService productService, long id)
+        public static async Task<IResult> DeleteProduct(IProductService productService, long id)
         {
             try
             {
@@ -100,10 +94,29 @@ namespace Products.Api.Endpoints
             }
             catch (Exception ex)
             {
-                return ex is NotFoundException ?
-                    TypedResults.NotFound(ex.Message) :
-                    TypedResults.StatusCode(statusCode: 500);
+                return HandleException(ex);
             }
+        }
+
+        public static IResult HandleException(Exception ex, string entityName = "")
+        {
+            if (ex is DbUpdateException dbUpdateEx && dbUpdateEx.InnerException != null)
+            {
+                if (dbUpdateEx.InnerException.Message.Contains("unique constraint"))
+                {
+                    return TypedResults.Conflict($"An entity with the same name '{entityName}' already exists!");
+                }
+            }
+            else if (ex is ValidationException validationEx)
+            {
+                return TypedResults.BadRequest(validationEx.Message);
+            }
+            else if (ex is NotFoundException validationNotFoundEx)
+            {
+                return TypedResults.NotFound(validationNotFoundEx.Message);
+            }
+            
+            return TypedResults.StatusCode(500);
         }
     }
 }

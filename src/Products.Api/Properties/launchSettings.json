@@ -17,7 +17,8 @@
       "applicationUrl": "http://localhost:5258",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "DB_PASSWORD": "n4rni41212"
+        "DB_PASSWORD": "{PREENCHER_SENHA}",
+        "DB_TYPE": "memory"
       }
     },
     "https": {

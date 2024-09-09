@@ -24,6 +24,7 @@ public class ProductsTest
         var notFoundResult = (NotFound)result.Result;
 
         Assert.NotNull(notFoundResult);
+        Assert.Equal(404, notFoundResult.StatusCode);
     }
 
     [Fact]
@@ -41,6 +42,7 @@ public class ProductsTest
         var okResult = (Ok<ProductReadDto>)result.Result;
 
         Assert.NotNull(okResult.Value);
+        Assert.Equal(200, okResult.StatusCode);
         Assert.True(okResult.Value.Id == 1);
     }
 
@@ -66,6 +68,7 @@ public class ProductsTest
         var okResult = (Ok<ProductListDto>)result.Result;
 
         Assert.NotNull(okResult.Value);
+        Assert.Equal(200, okResult.StatusCode);
         Assert.True(okResult.Value.TotalCount == 2);
     }
 
@@ -88,6 +91,7 @@ public class ProductsTest
         var notFoundResult = (NotFound<string>)result.Result;
 
         Assert.NotNull(notFoundResult);
+        Assert.Equal(404, notFoundResult.StatusCode);
     }
 
     [Fact]
@@ -108,11 +112,12 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.RegisterProduct(mock.Object, productDto);
 
-        Assert.IsType<Results<Created, BadRequest<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<Created>(result);
 
-        var createdResult = (Created)result.Result;
+        var createdResult = (Created)result;
 
         Assert.NotNull(createdResult);
+        Assert.Equal(201, createdResult.StatusCode);
     }
 
     [Fact]
@@ -133,12 +138,39 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.RegisterProduct(mock.Object, productDto);
 
-        Assert.IsType<Results<Created, BadRequest<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<BadRequest<string>>(result);
 
-        var badRequestResult = (BadRequest<string>)result.Result;
+        var badRequestResult = (BadRequest<string>)result;
 
         Assert.NotNull(badRequestResult);
+        Assert.Equal(400, badRequestResult.StatusCode);
         Assert.Equal("The product value cannot be less than zero!", badRequestResult.Value);
+    }
+
+    [Fact]
+    public async Task CreatesProductReturnsDuplicateException()
+    {
+        var productDto = new ProductCreateDto
+        {
+            Name = "Product 1",
+            Description = "",
+            Quantity = 10,
+            Value = 99.99m
+        };
+
+        var mock = new Mock<IProductService>();
+
+        mock.Setup(m => m.Register(productDto))
+            .Throws(new Microsoft.EntityFrameworkCore.DbUpdateException("", new Exception("unique constraint")));
+
+        var result = await ProductsEndpoints.RegisterProduct(mock.Object, productDto);
+
+        Assert.IsType<Conflict<string>>(result);
+
+        var conflictResult = (Conflict<string>)result;
+
+        Assert.NotNull(conflictResult);
+        Assert.Equal(409, conflictResult.StatusCode);
     }
 
     [Fact]
@@ -159,9 +191,9 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.RegisterProduct(mock.Object, productDto);
 
-        Assert.IsType<Results<Created, BadRequest<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<StatusCodeHttpResult>(result);
 
-        var statusCodeHttpResult = (StatusCodeHttpResult)result.Result;
+        var statusCodeHttpResult = (StatusCodeHttpResult)result;
 
         Assert.NotNull(statusCodeHttpResult);
         Assert.Equal(500, statusCodeHttpResult.StatusCode);
@@ -186,11 +218,12 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.UpdateProduct(mock.Object, productDto);
 
-        Assert.IsType<Results<NoContent, BadRequest<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<NoContent>(result);
 
-        var noContentResult = (NoContent)result.Result;
+        var noContentResult = (NoContent)result;
 
         Assert.NotNull(noContentResult);
+        Assert.Equal(204, noContentResult.StatusCode);
     }
 
     [Fact]
@@ -212,11 +245,12 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.UpdateProduct(mock.Object, productDto);
 
-        Assert.IsType<Results<NoContent, BadRequest<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<BadRequest<string>>(result);
 
-        var badRequestResult = (BadRequest<string>)result.Result;
+        var badRequestResult = (BadRequest<string>)result;
 
         Assert.NotNull(badRequestResult);
+        Assert.Equal(400, badRequestResult.StatusCode);
         Assert.Equal("The product value cannot be less than zero!", badRequestResult.Value);
     }
 
@@ -239,9 +273,9 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.UpdateProduct(mock.Object, productDto);
 
-        Assert.IsType<Results<NoContent, BadRequest<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<StatusCodeHttpResult>(result);
 
-        var statusCodeHttpResult = (StatusCodeHttpResult)result.Result;
+        var statusCodeHttpResult = (StatusCodeHttpResult)result;
 
         Assert.NotNull(statusCodeHttpResult);
         Assert.Equal(500, statusCodeHttpResult.StatusCode);
@@ -257,11 +291,12 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.DeleteProduct(mock.Object, 1);
 
-        Assert.IsType<Results<NoContent, NotFound<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<NoContent>(result);
 
-        var noContentResult = (NoContent)result.Result;
+        var noContentResult = (NoContent)result;
 
         Assert.NotNull(noContentResult);
+        Assert.Equal(204, noContentResult.StatusCode);
     }
 
     [Fact]
@@ -274,11 +309,12 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.DeleteProduct(mock.Object, 1);
 
-        Assert.IsType<Results<NoContent, NotFound<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<NotFound<string>>(result);
 
-        var notFoundResult = (NotFound<string>)result.Result;
+        var notFoundResult = (NotFound<string>)result;
 
         Assert.NotNull(notFoundResult);
+        Assert.Equal(404, notFoundResult.StatusCode);
         Assert.Equal("No data found for deletion!", notFoundResult.Value);
     }
 
@@ -292,9 +328,9 @@ public class ProductsTest
 
         var result = await ProductsEndpoints.DeleteProduct(mock.Object, 1);
 
-        Assert.IsType<Results<NoContent, NotFound<string>, StatusCodeHttpResult>>(result);
+        Assert.IsType<StatusCodeHttpResult>(result);
 
-        var statusCodeHttpResult = (StatusCodeHttpResult)result.Result;
+        var statusCodeHttpResult = (StatusCodeHttpResult)result;
 
         Assert.NotNull(statusCodeHttpResult);
         Assert.Equal(500, statusCodeHttpResult.StatusCode);

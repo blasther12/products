@@ -1,26 +1,30 @@
 @Api_HostAddress = http://localhost:5258
 
+// Buscar todos os produtos
 GET {{Api_HostAddress}}/api/products/
 Accept: application/json
 
 ###
 
+// Buscar um produto
 GET {{Api_HostAddress}}/api/products/1
 Accept: application/json
 
 ###
 
+// Criar produto
 POST {{Api_HostAddress}}/api/products
 Content-Type: application/json
 
 {
-    "name": "Product 6",
+    "name": "Product 1",
     "description": "Description 6",
     "quantity": 0,
     "value": 10.00
 }
 ###
 
+// Atualizar produto
 PUT {{Api_HostAddress}}/api/products
 Content-Type: application/json
 
@@ -34,5 +38,6 @@ Content-Type: application/json
 
 ###
 
+// Deletar um produto
 DELETE  {{Api_HostAddress}}/api/products/1
 ###
