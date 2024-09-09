@@ -74,6 +74,7 @@ Executar os request dentro do arquivo `src\Products.Api\Products.Api.http`.
 
 Ou acessando Swagger da aplicação acessando: http://localhost:5258/swagger/index.html
 
+![image](https://github.com/user-attachments/assets/a99c5fd9-c4ec-4ea5-a763-a574111721ce)
 
 ## Rodando os testes
 
